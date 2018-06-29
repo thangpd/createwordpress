@@ -1,0 +1,131 @@
+#!/bin/bash
+
+default_sql_string='name_of_thang'
+dbuser='root'
+dbpass=''
+#assets_wp recommended have : woocommerce, revolution slider, contactform, regenerate thumbnail, visual composer,wordpress
+assets_wp=/home/thang/xampp/assets_WP
+web_root=/home/thang/xampp
+gitsrc=/home/thang/solazu-git
+htdocs_path=/opt/lampp/htdocs
+
+for (( i=0 ; ; i++ ))
+do
+
+echo "Nhap. ten WP muon\' tao. \n";
+echo "Type \" :q \" to exit";
+read wp_name
+case $wp_name in 
+	'')
+		echo 'empty'
+	;;
+	':q')
+		break ;
+	;;
+	':Q')
+		break ;
+	;;
+	*)
+		array=("${array[@]}" $wp_name)
+	;;
+esac
+done
+for wp_name in ${array[@]}
+do
+        if [ ! -d ${web_root}/${wp_name} ]; then
+            cp -rf ${assets_wp}/wordpress/                              ${web_root}/$wp_name
+            ln -s ${assets_wp}/revslider                                ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/js_composer                              ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/contact-form-7                           ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/contact-form-7-dynamic-text-extension    ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/newsletter/                              ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/woocommerce/                             ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/yith-woocommerce-wishlist/               ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/yith-woocommerce-zoom-magnifier/         ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/wp-user-avatar/                          ${web_root}/$wp_name/wp-content/plugins/
+            ln -s ${assets_wp}/regenerate-thumbnails/                   ${web_root}/$wp_name/wp-content/plugins/
+        else
+            echo 'already ' ${web_root}/${wp_name}
+        fi
+
+        if [  -d ${gitsrc}/${wp_name} ] ;then
+                #symlink git code/theme
+		        ln -s ${gitsrc}/$wp_name/code/theme ${web_root}/$wp_name/wp-content/themes/$wp_name
+            else
+                echo 'not found' ${gitsrc}/${wp_name}
+        fi
+        if [ -d ${gitsrc}/solazu-core/solazu-unyson ] ; then
+                    ln -s ${gitsrc}/solazu-core/solazu-unyson ${web_root}/$wp_name/wp-content/plugins/
+        fi
+
+        if [ -d ${gitsrc}/${wp_name}/code/plugin ] ; then
+                    ln -s ${gitsrc}/${wp_name}/code/plugin ${web_root}/$wp_name/wp-content/plugins/
+        fi
+
+        #create wp_config.php
+        mv ${web_root}/$wp_name/wp-config-sample.php ${web_root}/$wp_name/wp-config.php
+        #set database details with perl find and replace
+        perl -pi -e "s/database_name_here/${wp_name}/g" ${web_root}/$wp_name/wp-config.php
+        perl -pi -e "s/username_here/$dbuser/g" ${web_root}/$wp_name/wp-config.php
+        perl -pi -e "s/password_here/$dbpass/g" ${web_root}/$wp_name/wp-config.php
+
+        #set WP salts
+        perl -i -pe'
+          BEGIN {
+            @chars = ("a" .. "z", "A" .. "Z", 0 .. 9);
+            push @chars, split //, "!@#$%^&*()-_ []{}<>~\`+=,.;:/?|";
+            sub salt { join "", map $chars[ rand @chars ], 1 .. 64 }
+          }
+          s/put your unique phrase here/salt()/ge
+        ' ${web_root}/$wp_name/wp-config.php
+        sed -r "s|\/\* That's all, stop editing! Happy blogging. \*\/|define('FS_METHOD','direct');|g" ${web_root}/$wp_name/wp-config.php
+
+        #====================Done create wp-config===============#
+
+		sudo chmod -R 777 ${web_root}/$wp_name/
+
+        if [ -f /opt/lampp/htdocs/$wp_name  ];then
+            rm -f $htdocs_path/$wp_name
+        fi
+        #symlink to opt/lampp/htdocs
+		sudo ln -s ${web_root}/$wp_name/  $htdocs_path/
+		sudo chown daemon:daemon  $htdocs_path/$wp_name
+
+        cp -rf wpdefault.sql wpdefaultON.sql
+        #change string of wpdefault.sql from default {string} to ${wp_name}
+		sed -i 's|'"$default_sql_string"'|'"$wp_name"'|g' wpdefaultON.sql
+
+		echo "==============================="
+		echo "Database ${wp_name} processing"
+		echo "==============================="
+
+		    exist_db=`mysqlshow -u ${dbuser} ${wp_name}| grep -v Wildcard | grep -o ${wp_name}`
+			if [ "$exist_db" == "${wp_name}" ]; then
+		    # Có tồn tại DB, show message có muốn xoá db không?
+		    echo "Do you want delete curent database & create new one? (y/n)"
+		    read -e newdb
+		    if [ $newdb == y ]; then
+		        mysql -u${dbuser}  -e "DROP DATABASE IF EXISTS \`${wp_name}\`; CREATE DATABASE \`${wp_name}\`;"
+		    fi
+    		else
+		    # Nếu không có db thì tạo mới db
+		    mysql -u${dbuser}  -e "DROP DATABASE IF EXISTS \`${wp_name}\`; CREATE DATABASE \`${wp_name}\`;"
+	    	fi
+
+            #show databases
+            mysql -u${dbuser} -e "show databases;"
+            echo "==============================="
+            echo "Importing default database"
+            echo "user:ad  pass:ad"
+            echo "==============================="
+            #import mysql
+            mysql -uroot $wp_name < wpdefaultON.sql
+
+
+		#change wpdefault.sql to default {string}
+		sed -i 's|'"$wp_name"'|'"$default_sql_string"'|g' wpdefault.sql
+	    google-chrome localhost/$wp_name & disown
+done
+echo ${array[@]}
+
+		
