@@ -1,12 +1,28 @@
 #!/bin/bash
 
+#Create wordpress theme script 
+#Version: 1.0.0
+
+
+
+
+#default string of wpdefault.mysql. Do not change if you know what you're doing.
 default_sql_string='name_of_thang'
+
+# DB user pass.
 dbuser='root'
 dbpass=''
-#assets_wp recommended have : woocommerce, revolution slider, contactform, regenerate thumbnail, visual composer,wordpress
+
+# Assets_wp recommended have : woocommerce, revolution slider, contactform, regenerate thumbnail, visual composer, wordpress
 assets_wp=/home/thang/xampp/assets_WP
+
+# Create a directory to store all your htdocs folder in here. It will auto symlink into ${htdocs_path} when your web folder is created.
 web_root=/home/thang/xampp
+
+# Git source folder 
 gitsrc=/home/thang/solazu-git
+
+# Path to htdocs folder indicate where to symlink web_root to.
 htdocs_path=/opt/lampp/htdocs
 
 for (( i=0 ; ; i++ ))
@@ -30,6 +46,8 @@ case $wp_name in
 	;;
 esac
 done
+
+# Coppy Wordpress and symlink plugin to ${web_root}
 for wp_name in ${array[@]}
 do
         if [ ! -d ${web_root}/${wp_name} ]; then
@@ -45,7 +63,7 @@ do
             ln -s ${assets_wp}/wp-user-avatar/                          ${web_root}/$wp_name/wp-content/plugins/
             ln -s ${assets_wp}/regenerate-thumbnails/                   ${web_root}/$wp_name/wp-content/plugins/
         else
-            echo 'already ' ${web_root}/${wp_name}
+            echo ${wp_name} 'already have in' ${web_root}/${wp_name}
         fi
 
         if [  -d ${gitsrc}/${wp_name} ] ;then
@@ -62,7 +80,7 @@ do
                     ln -s ${gitsrc}/${wp_name}/code/plugin ${web_root}/$wp_name/wp-content/plugins/
         fi
 
-        #create wp_config.php
+        #=====================Create wp_config.php=============================#
         mv ${web_root}/$wp_name/wp-config-sample.php ${web_root}/$wp_name/wp-config.php
         #set database details with perl find and replace
         perl -pi -e "s/database_name_here/${wp_name}/g" ${web_root}/$wp_name/wp-config.php
@@ -78,11 +96,13 @@ do
           }
           s/put your unique phrase here/salt()/ge
         ' ${web_root}/$wp_name/wp-config.php
-        sed -r "s|\/\* That's all, stop editing! Happy blogging. \*\/|define('FS_METHOD','direct');|g" ${web_root}/$wp_name/wp-config.php
+
+	sed -i.bak "s|\/\* That's all, stop editing! Happy blogging. \*\/|define('FS_METHOD','direct');|g" ${web_root}/$wp_name/wp-config.php
+	sed -i.bak "s|define('WP_DEBUG', false);|define('WP_DEBUG', true);|g" ${web_root}/$wp_name/wp-config.php
 
         #====================Done create wp-config===============#
 
-		sudo chmod -R 777 ${web_root}/$wp_name/
+	sudo chmod -R 777 ${web_root}/$wp_name/
 
         if [ -f /opt/lampp/htdocs/$wp_name  ];then
             rm -f $htdocs_path/$wp_name
@@ -91,7 +111,9 @@ do
 		sudo ln -s ${web_root}/$wp_name/  $htdocs_path/
 		sudo chown daemon:daemon  $htdocs_path/$wp_name
 
-        cp -rf wpdefault.sql wpdefaultON.sql
+	#====================Import Mysql database==========================#
+        
+		cp -rf wpdefault.sql wpdefaultON.sql
         #change string of wpdefault.sql from default {string} to ${wp_name}
 		sed -i 's|'"$default_sql_string"'|'"$wp_name"'|g' wpdefaultON.sql
 
@@ -101,31 +123,33 @@ do
 
 		    exist_db=`mysqlshow -u ${dbuser} ${wp_name}| grep -v Wildcard | grep -o ${wp_name}`
 			if [ "$exist_db" == "${wp_name}" ]; then
-		    # Có tồn tại DB, show message có muốn xoá db không?
-		    echo "Do you want delete curent database & create new one? (y/n)"
-		    read -e newdb
-		    if [ $newdb == y ]; then
-		        mysql -u${dbuser}  -e "DROP DATABASE IF EXISTS \`${wp_name}\`; CREATE DATABASE \`${wp_name}\`;"
-		    fi
-    		else
-		    # Nếu không có db thì tạo mới db
-		    mysql -u${dbuser}  -e "DROP DATABASE IF EXISTS \`${wp_name}\`; CREATE DATABASE \`${wp_name}\`;"
-	    	fi
+			    # Existing database.
+			    echo "Do you want delete curent database & create new one? (y/n)"
+			    read -e newdb
+				
+			    if [ $newdb == y ]; then
+				mysql -u${dbuser}  -e "DROP DATABASE IF EXISTS \`${wp_name}\`; CREATE DATABASE \`${wp_name}\`;"
+				else
+					break	
+			    fi
+	    		else
+			    # Create database.
+			    mysql -u${dbuser}  -e "DROP DATABASE IF EXISTS \`${wp_name}\`; CREATE DATABASE \`${wp_name}\`;"
+		    	fi
 
             #show databases
             mysql -u${dbuser} -e "show databases;"
-            echo "==============================="
-            echo "Importing default database"
-            echo "user:ad  pass:ad"
-            echo "==============================="
-            #import mysql
-            mysql -uroot $wp_name < wpdefaultON.sql
-
-
+	    echo "==============================="
+	    echo "Importing default database"
+	    echo "user:ad  pass:ad"
+	    echo "==============================="
+	    	
+		#import mysql
+	    	mysql -uroot $wp_name < wpdefaultON.sql
 		#change wpdefault.sql to default {string}
 		sed -i 's|'"$wp_name"'|'"$default_sql_string"'|g' wpdefault.sql
-	    google-chrome localhost/$wp_name & disown
+		google-chrome localhost/$wp_name & disown
 done
-echo ${array[@]}
+echo 'Created:' ${array[@]}
 
 		
