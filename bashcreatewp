@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#Create wordpress theme script 
+#Version: 1.0.0
+
+
+
+
 #default string of wpdefault.mysql. Do not change if you know what you're doing.
 default_sql_string='name_of_thang'
 
