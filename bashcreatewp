@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#Create wordpress theme script 
+#Version: 1.0.0
+
 #default string of wpdefault.mysql. Do not change if you know what you're doing.
 default_sql_string='name_of_thang'
 
@@ -142,8 +145,10 @@ do
 	    	mysql -uroot $wp_name < wpdefaultON.sql
 		#change wpdefault.sql to default {string}
 		sed -i 's|'"$wp_name"'|'"$default_sql_string"'|g' wpdefault.sql
+
 		# delete wpdefaultON.sql
 		rm -f wpdefaultON.sql
+
 		google-chrome localhost/$wp_name & disown
 done
 echo 'Created:' ${array[@]}
