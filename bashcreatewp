@@ -10,7 +10,8 @@ default_sql_string='name_of_thang'
 dbuser='root'
 dbpass=''
 
-# Assets_wp recommended have : woocommerce, revolution slider, contactform, regenerate thumbnail, visual composer, wordpress
+
+# Assets_wp recommended have : woocommerce, revolution slider, contactform, regenerate thumbnail, visual composer, wordpress(english)
 assets_wp=/home/thang/xampp/assets_WP
 
 # Create a directory to store all your htdocs folder in here. It will auto symlink into ${htdocs_path} when your web folder is created.
