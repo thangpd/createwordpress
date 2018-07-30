@@ -21,7 +21,7 @@ web_root=/home/thang/xampp
 gitsrc=/home/thang/solazu-git
 
 # Path to htdocs folder indicate where to symlink web_root to.
-htdocs_path=/opt/lampp/htdocs
+htdocs_path=/var/www/html
 
 for (( i=0 ; ; i++ ))
 do
@@ -79,33 +79,39 @@ do
         fi
 
         #=====================Create wp_config.php=============================#
-        mv ${web_root}/$wp_name/wp-config-sample.php ${web_root}/$wp_name/wp-config.php
-        #set database details with perl find and replace
-        perl -pi -e "s/database_name_here/${wp_name}/g" ${web_root}/$wp_name/wp-config.php
-        perl -pi -e "s/username_here/$dbuser/g" ${web_root}/$wp_name/wp-config.php
-        perl -pi -e "s/password_here/$dbpass/g" ${web_root}/$wp_name/wp-config.php
+	if [ -f ${web_root}/$wp_name/wp-config-sample.php ] ; then
 
-        #set WP salts
-        perl -i -pe'
-          BEGIN {
-            @chars = ("a" .. "z", "A" .. "Z", 0 .. 9);
-            push @chars, split //, "!@#$%^&*()-_ []{}<>~\`+=,.;:/?|";
-            sub salt { join "", map $chars[ rand @chars ], 1 .. 64 }
-          }
-          s/put your unique phrase here/salt()/ge
-        ' ${web_root}/$wp_name/wp-config.php
+		mv ${web_root}/$wp_name/wp-config-sample.php ${web_root}/$wp_name/wp-config.php
+	
+		#set database details with perl find and replace
+		perl -pi -e "s/database_name_here/${wp_name}/g" ${web_root}/$wp_name/wp-config.php
+		perl -pi -e "s/username_here/$dbuser/g" ${web_root}/$wp_name/wp-config.php
+		perl -pi -e "s/password_here/$dbpass/g" ${web_root}/$wp_name/wp-config.php
 
-	sed -i.bak "s|\/\* That's all, stop editing! Happy blogging. \*\/|define('FS_METHOD','direct');|g" ${web_root}/$wp_name/wp-config.php
-	sed -i.bak "s|define('WP_DEBUG', false);|define('WP_DEBUG', true);|g" ${web_root}/$wp_name/wp-config.php
+		#set WP salts
+		perl -i -pe'
+		  BEGIN {
+		    @chars = ("a" .. "z", "A" .. "Z", 0 .. 9);
+		    push @chars, split //, "!@#$%^&*()-_ []{}<>~\`+=,.;:/?|";
+		    sub salt { join "", map $chars[ rand @chars ], 1 .. 64 }
+		  }
+		  s/put your unique phrase here/salt()/ge
+		' ${web_root}/$wp_name/wp-config.php
 
+		sed -i.bak "s|\/\* That's all, stop editing! Happy blogging. \*\/|define('FS_METHOD','direct');define( 'WP_MEMORY_LIMIT', '256M' );|g" ${web_root}/$wp_name/wp-config.php
+		sed -i.bak "s|define('WP_DEBUG', false);|define('WP_DEBUG', true);|g" ${web_root}/$wp_name/wp-config.php
+	else
+		echo "not found ${web_root}/${wp_name}/wp-config-sample.php";
+	fi
         #====================Done create wp-config===============#
 
 	sudo chmod -R 777 ${web_root}/$wp_name/
 
-        if [ -f /opt/lampp/htdocs/$wp_name  ];then
+        if [ -f $htdocs_path/$wp_name  ];then
             rm -f $htdocs_path/$wp_name
         fi
-        #symlink to opt/lampp/htdocs
+
+        #symlink to */htdocs
 		sudo ln -s ${web_root}/$wp_name/  $htdocs_path/
 		sudo chown daemon:daemon  $htdocs_path/$wp_name
 
@@ -149,7 +155,8 @@ do
 
 		# delete wpdefaultON.sql
 		rm -f wpdefaultON.sql
-
+		
+		#start google-chrome
 		google-chrome localhost/$wp_name & disown
 done
 echo 'Created:' ${array[@]}
