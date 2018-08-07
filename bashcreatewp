@@ -48,21 +48,23 @@ done
 # Coppy Wordpress and symlink plugin to ${web_root}
 for wp_name in ${array[@]}
 do
+	
         if [ ! -d ${web_root}/${wp_name} ]; then
             cp -rf ${assets_wp}/wordpress/                              ${web_root}/$wp_name
-            ln -s ${assets_wp}/revslider                                ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/js_composer                              ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/contact-form-7                           ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/contact-form-7-dynamic-text-extension    ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/newsletter/                              ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/woocommerce/                             ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/yith-woocommerce-wishlist/               ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/yith-woocommerce-zoom-magnifier/         ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/wp-user-avatar/                          ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/regenerate-thumbnails/                   ${web_root}/$wp_name/wp-content/plugins/
         else
             echo ${wp_name} 'already have in' ${web_root}/${wp_name}
         fi
+	ln -s ${assets_wp}/revslider                                ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/js_composer                              ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/contact-form-7                           ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/contact-form-7-dynamic-text-extension    ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/newsletter/                              ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/woocommerce/                             ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/yith-woocommerce-wishlist/               ${web_root}/$wp_name/wp-content/plugins/
+	ln -s ${assets_wp}/yith-woocommerce-zoom-magnifier/         ${web_root}/$wp_name/wp-content/plugins/
+	ln -s ${assets_wp}/wp-user-avatar/                          ${web_root}/$wp_name/wp-content/plugins/
+	ln -s ${assets_wp}/regenerate-thumbnails/                   ${web_root}/$wp_name/wp-content/plugins/	
+
 
         if [  -d ${gitsrc}/${wp_name} ] ;then
                 #symlink git code/theme
