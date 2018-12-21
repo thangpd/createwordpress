@@ -3,9 +3,6 @@
 #Create wordpress theme script 
 #Version: 1.0.0
 
-
-
-
 #default string of wpdefault.mysql. Do not change if you know what you're doing.
 default_sql_string='name_of_thang'
 
@@ -13,7 +10,8 @@ default_sql_string='name_of_thang'
 dbuser='root'
 dbpass=''
 
-# Assets_wp recommended have : woocommerce, revolution slider, contactform, regenerate thumbnail, visual composer, wordpress
+
+# Assets_wp recommended have : woocommerce, revolution slider, contactform, regenerate thumbnail, visual composer, wordpress(english)
 assets_wp=/home/thang/xampp/assets_WP
 
 # Create a directory to store all your htdocs folder in here. It will auto symlink into ${htdocs_path} when your web folder is created.
@@ -23,7 +21,7 @@ web_root=/home/thang/xampp
 gitsrc=/home/thang/solazu-git
 
 # Path to htdocs folder indicate where to symlink web_root to.
-htdocs_path=/opt/lampp/htdocs
+htdocs_path=/var/www/html
 
 for (( i=0 ; ; i++ ))
 do
@@ -50,21 +48,23 @@ done
 # Coppy Wordpress and symlink plugin to ${web_root}
 for wp_name in ${array[@]}
 do
+	
         if [ ! -d ${web_root}/${wp_name} ]; then
             cp -rf ${assets_wp}/wordpress/                              ${web_root}/$wp_name
-            ln -s ${assets_wp}/revslider                                ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/js_composer                              ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/contact-form-7                           ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/contact-form-7-dynamic-text-extension    ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/newsletter/                              ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/woocommerce/                             ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/yith-woocommerce-wishlist/               ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/yith-woocommerce-zoom-magnifier/         ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/wp-user-avatar/                          ${web_root}/$wp_name/wp-content/plugins/
-            ln -s ${assets_wp}/regenerate-thumbnails/                   ${web_root}/$wp_name/wp-content/plugins/
         else
             echo ${wp_name} 'already have in' ${web_root}/${wp_name}
         fi
+	ln -s ${assets_wp}/revslider                                ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/js_composer                              ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/contact-form-7                           ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/contact-form-7-dynamic-text-extension    ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/newsletter/                              ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/woocommerce/                             ${web_root}/$wp_name/wp-content/plugins/
+        ln -s ${assets_wp}/yith-woocommerce-wishlist/               ${web_root}/$wp_name/wp-content/plugins/
+	ln -s ${assets_wp}/yith-woocommerce-zoom-magnifier/         ${web_root}/$wp_name/wp-content/plugins/
+	ln -s ${assets_wp}/wp-user-avatar/                          ${web_root}/$wp_name/wp-content/plugins/
+	ln -s ${assets_wp}/regenerate-thumbnails/                   ${web_root}/$wp_name/wp-content/plugins/	
+
 
         if [  -d ${gitsrc}/${wp_name} ] ;then
                 #symlink git code/theme
@@ -81,33 +81,39 @@ do
         fi
 
         #=====================Create wp_config.php=============================#
-        mv ${web_root}/$wp_name/wp-config-sample.php ${web_root}/$wp_name/wp-config.php
-        #set database details with perl find and replace
-        perl -pi -e "s/database_name_here/${wp_name}/g" ${web_root}/$wp_name/wp-config.php
-        perl -pi -e "s/username_here/$dbuser/g" ${web_root}/$wp_name/wp-config.php
-        perl -pi -e "s/password_here/$dbpass/g" ${web_root}/$wp_name/wp-config.php
+	if [ -f ${web_root}/$wp_name/wp-config-sample.php ] ; then
 
-        #set WP salts
-        perl -i -pe'
-          BEGIN {
-            @chars = ("a" .. "z", "A" .. "Z", 0 .. 9);
-            push @chars, split //, "!@#$%^&*()-_ []{}<>~\`+=,.;:/?|";
-            sub salt { join "", map $chars[ rand @chars ], 1 .. 64 }
-          }
-          s/put your unique phrase here/salt()/ge
-        ' ${web_root}/$wp_name/wp-config.php
+		mv ${web_root}/$wp_name/wp-config-sample.php ${web_root}/$wp_name/wp-config.php
+	
+		#set database details with perl find and replace
+		perl -pi -e "s/database_name_here/${wp_name}/g" ${web_root}/$wp_name/wp-config.php
+		perl -pi -e "s/username_here/$dbuser/g" ${web_root}/$wp_name/wp-config.php
+		perl -pi -e "s/password_here/$dbpass/g" ${web_root}/$wp_name/wp-config.php
 
-	sed -i.bak "s|\/\* That's all, stop editing! Happy blogging. \*\/|define('FS_METHOD','direct');|g" ${web_root}/$wp_name/wp-config.php
-	sed -i.bak "s|define('WP_DEBUG', false);|define('WP_DEBUG', true);|g" ${web_root}/$wp_name/wp-config.php
+		#set WP salts
+		perl -i -pe'
+		  BEGIN {
+		    @chars = ("a" .. "z", "A" .. "Z", 0 .. 9);
+		    push @chars, split //, "!@#$%^&*()-_ []{}<>~\`+=,.;:/?|";
+		    sub salt { join "", map $chars[ rand @chars ], 1 .. 64 }
+		  }
+		  s/put your unique phrase here/salt()/ge
+		' ${web_root}/$wp_name/wp-config.php
 
+		sed -i.bak "s|\/\* That's all, stop editing! Happy blogging. \*\/|define('FS_METHOD','direct');define( 'WP_MEMORY_LIMIT', '256M' );|g" ${web_root}/$wp_name/wp-config.php
+		sed -i.bak "s|define('WP_DEBUG', false);|define('WP_DEBUG', true);|g" ${web_root}/$wp_name/wp-config.php
+	else
+		echo "not found ${web_root}/${wp_name}/wp-config-sample.php";
+	fi
         #====================Done create wp-config===============#
 
 	sudo chmod -R 777 ${web_root}/$wp_name/
 
-        if [ -f /opt/lampp/htdocs/$wp_name  ];then
+        if [ -f $htdocs_path/$wp_name  ];then
             rm -f $htdocs_path/$wp_name
         fi
-        #symlink to opt/lampp/htdocs
+
+        #symlink to */htdocs
 		sudo ln -s ${web_root}/$wp_name/  $htdocs_path/
 		sudo chown daemon:daemon  $htdocs_path/$wp_name
 
@@ -148,6 +154,11 @@ do
 	    	mysql -uroot $wp_name < wpdefaultON.sql
 		#change wpdefault.sql to default {string}
 		sed -i 's|'"$wp_name"'|'"$default_sql_string"'|g' wpdefault.sql
+
+		# delete wpdefaultON.sql
+		rm -f wpdefaultON.sql
+		
+		#start google-chrome
 		google-chrome localhost/$wp_name & disown
 done
 echo 'Created:' ${array[@]}
